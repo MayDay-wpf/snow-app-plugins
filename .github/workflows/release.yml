@@ -1,0 +1,115 @@
+name: Release
+
+# 推送形如 eye-care-ball/v1.0.0 的 tag 时，自动发布 Release 并输出市场条目。
+on:
+  push:
+    tags:
+      - "eye-care-ball/v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify userscripts
+        run: node scripts/check-userscripts.mjs
+
+      - name: Resolve version and SHA-256
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#*/}"
+          FILE="plugins/eye-care-ball/eye-care-ball.user.js"
+
+          if [ ! -f "$FILE" ]; then
+            echo "::error::asset file not found: $FILE"
+            exit 1
+          fi
+
+          if ! HEADER_VERSION="$(grep -m1 -E '^//[[:space:]]*@version[[:space:]]+' "$FILE")"; then
+            echo "::error::missing @version in $FILE"
+            exit 1
+          fi
+          HEADER_VERSION="$(printf '%s' "$HEADER_VERSION" \
+            | sed -E 's|^//[[:space:]]*@version[[:space:]]+||' \
+            | tr -d '\r\n' \
+            | sed -E 's/[[:space:]]+$//')"
+
+          if [ "$VERSION" != "$HEADER_VERSION" ]; then
+            echo "::error::tag version '$VERSION' does not match @version '$HEADER_VERSION' in $FILE"
+            exit 1
+          fi
+
+          SHA256="$(sha256sum "$FILE" | awk '{print $1}')"
+
+          {
+            echo "version=$VERSION"
+            echo "sha256=$SHA256"
+            echo "file=$FILE"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### $TAG"
+            echo ""
+            echo "- asset: \`$FILE\`"
+            echo "- sha256: \`$SHA256\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          SHA256: ${{ steps.meta.outputs.sha256 }}
+          FILE: ${{ steps.meta.outputs.file }}
+        run: |
+          set -euo pipefail
+
+          NOTES="$(mktemp)"
+          cat > "$NOTES" <<EOF
+          ## 护眼操 · 跟随光球 v${VERSION}
+
+          90 秒一组：眼球跟随光球做平滑追踪、快速扫视与远近调焦，锻炼并放松睫状肌。
+
+          - 提醒文字贴着光球移动：只动眼球，不转脖子
+          - 入口：顶栏右侧「护眼操」按钮（找不到时看右下角浮动按钮）
+          - SHA-256: \`${SHA256}\`
+
+          **安装**：插件 → 插件列表 → 脚本插件 → 导入文件，选择下方附件；或在插件市场一键安装。
+          EOF
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" \
+              --title "护眼操 v${VERSION}" \
+              --notes-file "$NOTES"
+          fi
+
+      - name: Write market entry to job summary
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          SHA256: ${{ steps.meta.outputs.sha256 }}
+        run: |
+          {
+            echo ""
+            echo "### 市场条目 / Market entry"
+            echo ""
+            echo "复制到 snow-plugin-store 的 \`app/plugins/snow.eye-care-ball.json\`："
+            echo ""
+            echo '```json'
+            node scripts/print-market-entry.mjs
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

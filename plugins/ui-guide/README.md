@@ -38,6 +38,10 @@ flowchart LR
 
 框形描边与说明卡会**逐帧跟随真实布局**，拖动窗口、折叠侧栏、切换视图都不会跑偏。
 
+## 在插件市场里找到它
+
+本仓库带 GitHub 主题 [`snow-plugins`](https://github.com/topics/snow-plugins)，**插件市场 → 社区插件** 打开即可搜到本仓库（关键词：`界面指引`、`ui-guide`、`snow-app-plugins`）。注意社区通道只安装仓库根目录含 `plugin.json` 的面板插件，脚本请用下面的方式安装。
+
 ## 安装
 
 ### 方式一：插件页面导入

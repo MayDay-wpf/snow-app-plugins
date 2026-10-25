@@ -19,6 +19,16 @@ scripts/print-market-entry.mjs # 生成插件市场条目 JSON
 | [护眼操 · 跟随光球](plugins/eye-care-ball/) | 客户端脚本 | 90 秒眼球运动：平滑追踪、快速扫视、远近调焦；提醒文字跟随光球，只动眼球不转脖子 |
 | [界面指引 · 框架高亮](plugins/ui-guide/) | 客户端脚本 | 首次加载自动对界面框架做一次框形高亮巡览，说明卡上给出各区域的锚点 / 插槽名；顶栏「指引」按钮可重播 |
 
+## 在插件市场里找到它
+
+本仓库带了 GitHub 主题 [`snow-plugins`](https://github.com/topics/snow-plugins)，所以不用提交官方索引也能被客户端检索到：
+
+- **插件市场 → 社区插件**：打开即列出主题下的全部仓库（含本仓库）；在搜索框输入关键词可进一步收窄，例如 `界面指引`、`护眼操`、`ui-guide`、`snow-app-plugins`（关键词匹配仓库名 / 描述 / README）。
+- 社区通道的「安装」只认仓库根目录（或唯一顶层子目录）里的 `plugin.json`，装出来的是**面板插件**；本仓库是脚本合集，没有根目录 `plugin.json`，因此脚本请按下面的方式安装：
+  - 插件 → 插件列表 → 脚本插件 → **导入文件**（选 `plugins/<plugin>/<plugin>.user.js`），或把 `.user.js` 的 https 直链粘进「从链接安装」；
+  - 或从对应 tag 的 GitHub Release 附件下载后导入。
+- [护眼操 · 跟随光球](plugins/eye-care-ball/) 另有官方索引条目（`kind: "script"`），可在 **插件市场 → 脚本插件** 一键安装与更新。
+
 ## 本地校验
 
 ```bash
